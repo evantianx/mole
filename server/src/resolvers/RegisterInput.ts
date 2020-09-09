@@ -3,7 +3,7 @@ import { IsEmail, Length } from "class-validator";
 import { IsPropertyAlreadyExist } from "../utils/isPropertyAlreadyExistConstraint";
 
 @InputType()
-export class UsernamePasswordInput {
+export class RegisterInput {
   @Field()
   @Length(3, 10)
   @IsPropertyAlreadyExist({

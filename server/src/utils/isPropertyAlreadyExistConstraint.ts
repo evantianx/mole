@@ -11,10 +11,16 @@ import { User } from "../entities/user";
 export class IsPropertyAlreadyExistConstraint
   implements ValidatorConstraintInterface {
   validate(value: any, args: ValidationArguments) {
-    const { property } = args;
-    return User.findOne({ where: { [property]: value } }).then((user) => {
-      if (user) return false;
-      return true;
+    const { property, targetName } = args;
+    const columnName =
+      targetName === "LoginInput"
+        ? value.includes("@")
+          ? "email"
+          : "username"
+        : property;
+    return User.findOne({ where: { [columnName]: value } }).then((user) => {
+      if (user) return targetName === "LoginInput";
+      return targetName !== "LoginInput";
     });
   }
 }
