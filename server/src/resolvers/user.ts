@@ -4,6 +4,7 @@ import { User } from "../entities/user";
 import argon2 from "argon2";
 import { MyContext } from "../types";
 import { LoginInput } from "./LoginInput";
+import { COOKIE_NAME } from "../constants";
 
 @ObjectType()
 export class FieldError {
@@ -81,5 +82,20 @@ export class UserResolver {
     return {
       user,
     };
+  }
+
+  @Mutation(() => Boolean)
+  async logout(@Ctx() { req, res }: MyContext) {
+    return new Promise((resolve) => {
+      req.session.destroy((err) => {
+        if (err) {
+          resolve(false);
+          return;
+        }
+
+        res.clearCookie(COOKIE_NAME);
+        resolve(true);
+      });
+    });
   }
 }
