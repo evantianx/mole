@@ -1,7 +1,8 @@
-import { Resolver, Mutation, Arg, ObjectType, Field } from "type-graphql";
+import { Resolver, Mutation, Arg, ObjectType, Field, Ctx } from "type-graphql";
 import { UsernamePasswordInput } from "./UsernamePasswordInput";
 import { User } from "../entities/user";
 import argon2 from "argon2";
+import { MyContext } from "../types";
 
 @ObjectType()
 export class FieldError {
@@ -25,27 +26,29 @@ export class UserResponse {
 export class UserResolver {
   @Mutation(() => UserResponse)
   async register(
-    @Arg("options") { username, email, password }: UsernamePasswordInput
+    @Arg("options") { username, email, password }: UsernamePasswordInput,
+    @Ctx() { req }: MyContext
   ): Promise<UserResponse> {
     const hashedPassword = await argon2.hash(password);
 
     let user, errors;
 
     try {
-      const result = await User.create({
+      user = await User.create({
         username,
         email,
         password: hashedPassword,
       }).save();
-
-      if (result) user = result;
-      console.log("result", result);
     } catch (err) {
       errors = [{ field: "", message: err.message }];
+      return {
+        errors,
+      };
     }
 
+    req.session.userId = user.id;
+
     return {
-      errors,
       user,
     };
   }
