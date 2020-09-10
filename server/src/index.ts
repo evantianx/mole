@@ -62,7 +62,10 @@ const main = async () => {
     migrations: [path.join(__dirname, "./migrations/*")],
   });
 
-  apolloServer.applyMiddleware({ app });
+  apolloServer.applyMiddleware({
+    app,
+    cors: { origin: "http://localhost:3000", credentials: true },
+  });
   // app.use(apolloServer.getMiddleware()); <== alternative way
 
   app.listen({ port: PORT }, () => {
