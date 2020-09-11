@@ -10,7 +10,7 @@ export const formatError = (err: GraphQLError) => {
       (acc, { property, constraints }) => {
         const message = constraints ? Object.values(constraints).join("&") : "";
         acc.field += `${acc.field === "" ? "" : "|"}${property}`;
-        acc.message += `${acc.message === "" ? "" : "|"}${property}:${message}`;
+        acc.message += `${acc.message === "" ? "" : "|"}${message}`;
         return acc;
       },
       { field: "", message: "" }

@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import express from "express";
+require("express-async-errors");
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
 import { HelloResolver } from "./resolvers/hello";

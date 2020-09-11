@@ -1,55 +1,64 @@
-import { Layout } from "../components/Layout";
-import { useForm } from "react-hook-form";
-import { withApollo } from "../utils/withApollo";
+import React from "react";
+import { Formik, Form } from "formik";
+import { Box, Button } from "@chakra-ui/core";
+import { Wrapper } from "../components/Wrapper";
 import { InputField } from "../components/InputField";
-import { Button } from "@chakra-ui/core";
 import { useRegisterMutation } from "../generated/graphql";
+import { toErrorMap } from "../utils/toErrorMap";
+import { useRouter } from "next/router";
+import { withApollo } from "../utils/withApollo";
 
-const Register: React.FC = ({}) => {
-  const [register, { data, loading, error }] = useRegisterMutation();
-  const { register: registerForm, handleSubmit } = useForm();
-  const onSubmit = async (data) => {
-    const response = await register({
-      variables: { options: data },
-    });
+interface registerProps {}
 
-    if (response.data?.register.errors) {
-      console.log(response.data?.register.errors);
-    }
-  };
-
+const Register: React.FC<registerProps> = ({}) => {
+  const [register] = useRegisterMutation();
+  const router = useRouter();
   return (
-    <Layout variant="small">
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <InputField
-          name="username"
-          label="username"
-          ref={registerForm({ required: true })}
-          errorMessage=""
-        />
-        <InputField
-          name="email"
-          label="email"
-          ref={registerForm({ required: true })}
-          errorMessage=""
-        />
-        <InputField
-          name="password"
-          label="password"
-          type="password"
-          ref={registerForm({ required: true })}
-          errorMessage=""
-        />
-        <Button
-          mt={4}
-          type="submit"
-          // isLoading={isSubmitting}
-          variantColor="teal"
-        >
-          register
-        </Button>
-      </form>
-    </Layout>
+    <Wrapper variant="small">
+      <Formik
+        initialValues={{ email: "", username: "", password: "" }}
+        onSubmit={async (values, { setErrors }) => {
+          console.log(values);
+          const response = await register({
+            variables: { options: values },
+          });
+          if (response.data?.register.errors) {
+            setErrors(toErrorMap(response.data.register.errors));
+          } else if (response.data?.register.user) {
+            router.push("/");
+          }
+        }}
+      >
+        {({ isSubmitting }) => (
+          <Form>
+            <InputField
+              name="username"
+              placeholder="username"
+              label="Username"
+            />
+            <Box mt={4}>
+              <InputField name="email" placeholder="email" label="Email" />
+            </Box>
+            <Box mt={4}>
+              <InputField
+                name="password"
+                placeholder="password"
+                label="password"
+                type="Password"
+              />
+            </Box>
+            <Button
+              mt={4}
+              type="submit"
+              isLoading={isSubmitting}
+              variantColor="teal"
+            >
+              register
+            </Button>
+          </Form>
+        )}
+      </Formik>
+    </Wrapper>
   );
 };
 
