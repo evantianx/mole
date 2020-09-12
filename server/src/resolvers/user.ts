@@ -1,10 +1,10 @@
 import { Resolver, Mutation, Arg, ObjectType, Field, Ctx } from "type-graphql";
-import { RegisterInput } from "./RegisterInput";
 import { User } from "../entities/user";
 import argon2 from "argon2";
 import { MyContext } from "../types";
-import { LoginInput } from "./LoginInput";
+import { RegisterInput } from "./RegisterInput";
 import { COOKIE_NAME } from "../constants";
+import { validateRegisterinput } from "../utils/validateUserinput";
 
 @ObjectType()
 export class FieldError {
@@ -31,9 +31,12 @@ export class UserResolver {
     @Arg("options") { username, email, password }: RegisterInput,
     @Ctx() { req }: MyContext
   ): Promise<UserResponse> {
+    const errors = validateRegisterinput({ username, email, password });
+    if (errors) return { errors };
+
     const hashedPassword = await argon2.hash(password);
 
-    let user, errors;
+    let user;
 
     try {
       user = await User.create({
@@ -42,13 +45,19 @@ export class UserResolver {
         password: hashedPassword,
       }).save();
     } catch (err) {
-      errors = [{ field: "", message: err.message }];
-      return {
-        errors,
-      };
+      if (err.code === "23505") {
+        return {
+          errors: [
+            {
+              field: "username",
+              message: "username has been taken",
+            },
+          ],
+        };
+      }
     }
 
-    req.session.userId = user.id;
+    req.session.userId = user?.id;
 
     return {
       user,
@@ -57,15 +66,26 @@ export class UserResolver {
 
   @Mutation(() => UserResponse)
   async login(
-    @Arg("options") { usernameOrEmail, password }: LoginInput,
+    @Arg("usernameOrEmail") usernameOrEmail: string,
+    @Arg("password") password: string,
     @Ctx() { req }: MyContext
   ): Promise<UserResponse> {
-    const user = (await User.findOne(
+    const user = await User.findOne(
       usernameOrEmail.includes("@")
         ? { where: { email: usernameOrEmail } }
         : { where: { username: usernameOrEmail } }
-    )) as User;
+    );
+
+    if (!user) {
+      return {
+        errors: [
+          { field: "usernameOrEmail", message: "username/email doesn't exist" },
+        ],
+      };
+    }
+
     const valid = argon2.verify(user.password, password);
+
     if (!valid) {
       return {
         errors: [

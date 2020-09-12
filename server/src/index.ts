@@ -1,6 +1,5 @@
 import "reflect-metadata";
 import express from "express";
-require("express-async-errors");
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
 import { HelloResolver } from "./resolvers/hello";
@@ -8,7 +7,6 @@ import { createConnection } from "typeorm";
 import path from "path";
 import { UserResolver } from "./resolvers/user";
 import { User } from "./entities/user";
-import { formatError } from "./utils/formatError";
 import Redis from "ioredis";
 import session from "express-session";
 import connectRedis from "connect-redis";
@@ -28,7 +26,6 @@ const main = async () => {
       req,
       redis,
     }),
-    formatError,
   });
 
   // for redis session
@@ -76,4 +73,4 @@ const main = async () => {
   });
 };
 
-main().catch((err) => console.error(err));
+main().catch((err) => console.log(err));
